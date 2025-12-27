@@ -1,7 +1,25 @@
 import React from "react";
 import Link from "next/link";
+import { prisma } from "@/app/lib/prisma";
 
-export default function Home() {
+async function getSongs() {
+  try {
+    const songs = await prisma.song.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 6,
+    });
+    return songs;
+  } catch (error) {
+    console.error("Error fetching songs:", error);
+    return [];
+  }
+}
+
+export default async function Home() {
+  const songs = await getSongs();
+
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
       {/* Hero Section */}
@@ -51,7 +69,9 @@ export default function Home() {
               key={inst}
               className="group cursor-pointer bg-card hover:bg-accent p-8 rounded-2xl transition text-center border border-border"
             >
-              <h3 className="text-xl font-semibold group-hover:text-accent-foreground">{inst}</h3>
+              <h3 className="text-xl font-semibold group-hover:text-accent-foreground">
+                {inst}
+              </h3>
             </div>
           ))}
         </div>
@@ -61,32 +81,43 @@ export default function Home() {
       <section className="py-16 px-4 max-w-7xl mx-auto border-t border-border">
         <div className="flex justify-between items-end mb-8">
           <h2 className="text-3xl font-bold">Trending Now</h2>
-          <Link href="/browse" className="text-muted-foreground hover:text-foreground font-medium">
+          <Link
+            href="/browse"
+            className="text-muted-foreground hover:text-foreground font-medium"
+          >
             View all &rarr;
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className="border border-border bg-card rounded-xl p-6 hover:shadow-lg transition duration-300 cursor-pointer"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="bg-muted text-muted-foreground text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">
-                  Chords
+          {songs.length > 0 ? (
+            songs.map((song: any) => (
+              <div
+                key={song.id}
+                className="border border-border bg-card rounded-xl p-6 hover:shadow-lg transition duration-300 cursor-pointer"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="bg-muted text-muted-foreground text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">
+                    Chords
+                  </div>
+                  <span className="text-muted-foreground text-sm">
+                    {song.key}
+                  </span>
                 </div>
-                <span className="text-muted-foreground text-sm">4.9 ★</span>
+                <h3 className="text-xl font-bold mb-1">{song.title}</h3>
+                <p className="text-muted-foreground mb-4">{song.tempo} BPM</p>
+                <div className="flex gap-2 text-sm text-muted-foreground">
+                  <span>Guitar</span>
+                  <span>•</span>
+                  <span>Key: {song.key}</span>
+                </div>
               </div>
-              <h3 className="text-xl font-bold mb-1">Song Title {i}</h3>
-              <p className="text-muted-foreground mb-4">Artist Name</p>
-              <div className="flex gap-2 text-sm text-muted-foreground">
-                <span>Guitar</span>
-                <span>•</span>
-                <span>Intermediate</span>
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-muted-foreground col-span-3 text-center py-8">
+              No songs found. Add some songs to get started!
+            </p>
+          )}
         </div>
       </section>
 

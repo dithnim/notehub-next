@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Song {
+  id        String     @id @default(uuid())
+  title     String
+  artist    String?
+  key       String
+  tempo     Int?
+  lines     SongLine[]
+  createdAt DateTime   @default(now())
+}
+
+model SongLine {
+  id     String           @id @default(uuid())
+  songId String
+  order  Int // line number
+  text   String // lyric line
+  song   Song             @relation(fields: [songId], references: [id], onDelete: Cascade)
+  chords ChordPlacement[]
+}
+
+model Chord {
+  id         String           @id @default(uuid())
+  name       String
+  placements ChordPlacement[]
+}
+
+model ChordPlacement {
+  id       String
+  lineId   String
+  chordId  String
+  position Int // character index
+  line     SongLine @relation(fields: [lineId], references: [id], onDelete: Cascade)
+  chord    Chord    @relation(fields: [chordId], references: [id])
+
+  @@id([id])
+}
